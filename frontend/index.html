@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Perspectivology</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); min-height: 100vh; padding: 20px; }
+    .container { max-width: 900px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.1); }
+    header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 40px 20px; text-align: center; }
+    header h1 { font-size: 2.5em; margin-bottom: 10px; }
+    main { padding: 40px; }
+    .phase { display: none; }
+    .phase.active { display: block; }
+    textarea { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ddd; border-radius: 8px; min-height: 120px; font-family: inherit; }
+    button { padding: 14px 28px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; margin-right: 10px; }
+    button:hover { opacity: 0.9; }
+    .output-box { background: #f8f9fa; border-left: 4px solid #667eea; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .team-member { border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+    .loading { display: none; }
+    .loading.show { display: flex; gap: 10px; align-items: center; }
+    .error { display: none; background: #fee; color: #c33; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Perspectivology</h1>
+      <p>Structured Decision Intelligence Engine</p>
+    </header>
+    <main>
+      <div class="phase active" id="phase1">
+        <h2>Phase 1: Clarity Capture</h2>
+        <div class="error" id="error1"></div>
+        <label>Your Challenge:</label>
+        <textarea id="challenge" placeholder="Describe your challenge..."></textarea>
+        <label>Why does this matter? (optional)</label>
+        <textarea id="whyItMatters" placeholder="What's at stake?"></textarea>
+        <button onclick="submitPhase1()">Continue to Phase 2</button>
+      </div>
+
+      <div class="phase" id="phase2">
+        <h2>Phase 2: Dream Team Construction</h2>
+        <div class="error" id="error2"></div>
+        <div class="loading" id="loading2">Loading...</div>
+        <div id="teamDisplay"></div>
+        <button onclick="backToPhase1()">Back</button>
+        <button onclick="submitPhase2()">Continue to Phase 3</button>
+      </div>
+
+      <div class="phase" id="phase3">
+        <h2>Phase 3: Cognitive Engine Interrogation</h2>
+        <div id="questionsDisplay"></div>
+        <button onclick="backToPhase2()">Back</button>
+        <button onclick="submitPhase3()">Continue</button>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+    let sessionData = { challenge: '', challengeType: '', team: [] };
+
+    function showPhase(n) {
+      document.querySelectorAll('.phase').forEach(p => p.classList.remove('active'));
+      document.getElementById(`phase${n}`).classList.add('active');
+    }
+
+    async function submitPhase1() {
+      const challenge = document.getElementById('challenge').value.trim();
+      if (!challenge) { alert('Please describe your challenge'); return; }
+      
+      sessionData.challenge = challenge;
+      try {
+        const res = await fetch(`${API_BASE}/api/phase1`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge })
+        });
+        const data = await res.json();
+        sessionData.challengeType = data.challengeType;
+        
+        document.getElementById('loading2').classList.add('show');
+        const res2 = await fetch(`${API_BASE}/api/phase2`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge, challengeType: data.challengeType })
+        });
+        const data2 = await res2.json();
+        sessionData.team = data2.team;
+        
+        document.getElementById('teamDisplay').innerHTML = data2.team.map((e, i) => 
+          `<div class="team-member"><h4>${i+1}. ${e.name}</h4><p>${e.field} (${e.years})</p><p>${e.relevance}</p></div>`
+        ).join('');
+        
+        document.getElementById('loading2').classList.remove('show');
+        showPhase(2);
+      } catch (e) {
+        document.getElementById('error2').innerHTML = e.message;
+        document.getElementById('error2').style.display = 'block';
+      }
+    }
+
+    async function submitPhase2() {
+      try {
+        const res = await fetch(`${API_BASE}/api/phase3`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ challenge: sessionData.challenge, team: sessionData.team })
+        });
+        const data = await res.json();
+        document.getElementById('questionsDisplay').innerHTML = 
+          `<div class="output-box"><p>${data.question}</p><p><em>Asked by: ${data.askedBy}</em></p></div>`;
+        showPhase(3);
+      } catch (e) {
+        alert(e.message);
+      }
+    }
+
+    function submitPhase3() { alert('Phase 3 complete!'); }
+    function backToPhase1() { showPhase(1); }
+    function backToPhase2() { showPhase(2); }
+  </script>
+</body>
+</html>
+EOFgit add frontend/index.html
+git commit -m "Add frontend HTML"
+git push
+
+git add frontend/index.html
+
+git commit -m "Add frontend HTML"
+git push
+
+
+
+
+
