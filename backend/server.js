@@ -2,23 +2,22 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Claude API setup
 const CLAUDE_API_KEY = process.env.CLAUDE_API_KEY;
 const CLAUDE_API_URL = 'https://api.anthropic.com/v1/messages';
 
-// Google Sheets data - will be fetched and cached
 let expertDatabase = [];
 let lastFetchTime = 0;
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
-// Fetch experts from Google Sheet (CSV export)
 async function fetchExpertDatabase() {
   const now = Date.now();
   if (expertDatabase.length > 0 && now - lastFetchTime < CACHE_DURATION) {
@@ -26,13 +25,11 @@ async function fetchExpertDatabase() {
   }
 
   try {
-    // Export Google Sheet as CSV
     const sheetId = '1v-As-SdoND3CYUm59o_LCMICpHOvRv98bYGh8JAHvG0';
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
     
     const response = await axios.get(csvUrl);
     const lines = response.data.split('\n');
-    const headers = lines[0].split(',');
     
     expertDatabase = [];
     
@@ -67,7 +64,6 @@ async function fetchExpertDatabase() {
   }
 }
 
-// Call Claude API
 async function callClaude(systemPrompt, userMessage) {
   try {
     const response = await axios.post(
@@ -95,7 +91,6 @@ async function callClaude(systemPrompt, userMessage) {
   }
 }
 
-// PHASE 1: Clarity Capture
 app.post('/api/phase1', async (req, res) => {
   const { challenge } = req.body;
   
@@ -133,7 +128,6 @@ Output as JSON:
   }
 });
 
-// PHASE 2: Dream Team Construction
 app.post('/api/phase2', async (req, res) => {
   const { challenge, challengeType } = req.body;
 
@@ -144,7 +138,6 @@ app.post('/api/phase2', async (req, res) => {
   try {
     const experts = await fetchExpertDatabase();
     
-    // Build expert pool description for Claude
     const expertPool = experts.map(e => 
       `${e.firstName} ${e.lastName} (${e.years}) - ${e.field1}, ${e.descriptor}`
     ).join('\n');
@@ -190,7 +183,6 @@ Output as JSON:
   }
 });
 
-// PHASE 3: Cognitive Engine Interrogation
 app.post('/api/phase3', async (req, res) => {
   const { challenge, team } = req.body;
 
@@ -228,7 +220,6 @@ Output as JSON:
   }
 });
 
-// Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
 });
